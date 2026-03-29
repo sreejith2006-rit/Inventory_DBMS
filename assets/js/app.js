@@ -1,0 +1,1 @@
+console.log("Inventory project UI loaded successfully.");
