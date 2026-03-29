@@ -1,0 +1,29 @@
+# Database Configuration
+config/db.php
+
+# Environment Files
+.env
+
+# IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS Specific Files
+.DS_Store
+Thumbs.db
+
+# Logs and Temp
+logs/
+tmp/
+*.log
+
+# Project Specific
+.gemini/
+.agents/
+.agent/
+_agents/
+_agent/
+node_modules/
+vendor/
