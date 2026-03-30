@@ -1,4 +1,12 @@
 <?php
+session_start();
+
+// Protection: Redirect to login if not logged in
+if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
+    header("Location: login.php?error=Access Denied. Please login first.");
+    exit;
+}
+
 include 'config/db.php';
 
 $total_items = $pdo->query("SELECT COUNT(*) FROM ITEM")->fetchColumn();

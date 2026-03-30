@@ -1,5 +1,7 @@
 # Database Configuration
 config/db.php
+config/mongo_config.php
+cacert.pem
 
 # Environment Files
 .env
