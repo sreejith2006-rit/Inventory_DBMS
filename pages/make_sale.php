@@ -33,7 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception("Batch not found.");
             }
 
-            // Insert into SALE - Your 'trg_check_stock' trigger will handle the quantity check
+            // Insert into SALE 
+            // Note: The following SQL Triggers execute automatically when this INSERT happens:
+            // 1. trg_check_expiry (BEFORE INSERT): Blocks sale if the batch is expired.
+            // 2. trg_check_stock (BEFORE INSERT): Blocks sale if requested quantity > available quantity.
+            // 3. trg_update_batch_after_sale (AFTER INSERT): Deducts the sold quantity from the batch table.
             $stmt_insert = $pdo->prepare("INSERT INTO SALE (Batch_ID, Quantity_Sold, Sale_Date) VALUES (?, ?, ?)");
             $stmt_insert->execute([$batch_id, $quantity_sold, $sale_date]);
 
