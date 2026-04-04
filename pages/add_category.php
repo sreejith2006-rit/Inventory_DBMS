@@ -74,4 +74,6 @@ $existing_categories = $pdo->query("SELECT * FROM CATEGORY ORDER BY Category_Nam
     </div>
 </div>
 
+</script>
+
 <?php include '../partials/footer.php'; ?>

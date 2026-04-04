@@ -45,12 +45,18 @@ For a deep-dive into the technical and functional logic of this application, ple
 
 ## 🚀 Quick Local Setup
 
-1.  **Deploy**: Clone to `htdocs/inventory_project`.
-2.  **MySQL**: Create `inventory_system` DB and import `inventory_system.sql`.
-3.  **Config**: Rename `config/db_example.php` to `config/db.php`.
-4.  **Atlas**: Enter your connection string in `config/mongo_config.php`.
-5.  **Seed**: Run `create_admin.php` to generate your login.
-    *   **Admin**: `admin` | **Pass**: `admin123`
+1.  **Clone**: Clone the repository to your `htdocs/inventory_project` folder.
+2.  **MySQL**: Create a database named `inventory_system` and import `inventory_system.sql`.
+3.  **Database Config**:
+    *   Copy `config/db.example.php` to `config/db.php`.
+    *   Open `config/db.php` and enter your local MySQL credentials.
+4.  **MongoDB Config**:
+    *   Copy `config/mongo_config.example.php` to `config/mongo_config.php`.
+    *   Open `config/mongo_config.php` and enter your MongoDB Atlas connection string.
+5.  **Dependencies**: Ensure you have the `mongodb` extension enabled in your `php.ini` and run `composer install`.
+6.  **Admin Account**: Run `create_admin.php` in your browser to create the initial admin user.
+    *   **Default Login**: User: `admin` | Pass: `admin123`
+
 
 ---
 *Developed with ❤️ for high-precision inventory and security management.*

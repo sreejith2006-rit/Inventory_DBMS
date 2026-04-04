@@ -117,4 +117,6 @@ $existing_items = $pdo->query("
     </div>
 </div>
 
+</script>
+
 <?php include '../partials/footer.php'; ?>

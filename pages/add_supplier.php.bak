@@ -5,17 +5,11 @@ include '../config/db.php';
 if (isset($_GET['action']) && $_GET['action'] === 'get_supplier') {
     $name = trim($_GET['name'] ?? '');
     if ($name !== '') {
-        $stmt = $pdo->prepare("
-            SELECT s.Email, p.Phone_No 
-            FROM SUPPLIER s 
-            LEFT JOIN SUPPLIER_PHONE p ON s.Supplier_ID = p.Supplier_ID 
-            WHERE s.Supplier_Name = ? 
-            LIMIT 1
-        ");
+        $stmt = $pdo->prepare("SELECT Email FROM SUPPLIER WHERE Supplier_Name = ?");
         $stmt->execute([$name]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row !== false) {
-            echo json_encode(['found' => true, 'email' => $row['Email'], 'phone' => $row['Phone_No']]);
+            echo json_encode(['found' => true, 'email' => $row['Email']]);
         } else {
             echo json_encode(['found' => false]);
         }
@@ -34,9 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $phone = trim($_POST['phone'] ?? '');
 
-    if ($supplier_name === '') {
-        $error = "Supplier name is required.";
-    } elseif ($phone !== '' && !preg_match('/^[0-9]{10}$/', $phone)) {
+    if ($supplier_name === '' || $phone === '') {
+        $error = "Supplier name and phone number are required.";
+    } elseif (!preg_match('/^[0-9]{10}$/', $phone)) {
         $error = "Please enter a valid phone number containing only 10 digits.";
     } else {
         try {
@@ -47,12 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $checkStmt->execute([$supplier_name]);
             $existingSupplier = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
-            // For new suppliers, phone is REQUIRED
-            if (!$existingSupplier && $phone === '') {
-                $pdo->rollBack();
-                $error = "Phone number is required for new suppliers.";
-            } else {
-                if ($existingSupplier) {
+            if ($existingSupplier) {
                 // Supplier already exists, reuse same Supplier_ID
                 $supplier_id = $existingSupplier['Supplier_ID'];
 
@@ -69,35 +58,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $supplier_id = $pdo->lastInsertId();
             }
 
-            // Step 2: Only check/add phone if one was provided
-            if ($phone !== '') {
-                $phoneCheckStmt = $pdo->prepare("SELECT * FROM SUPPLIER_PHONE WHERE Supplier_ID = ? AND Phone_No = ?");
-                $phoneCheckStmt->execute([$supplier_id, $phone]);
+            // Step 2: Check if this phone number already exists for that supplier
+            $phoneCheckStmt = $pdo->prepare("SELECT * FROM SUPPLIER_PHONE WHERE Supplier_ID = ? AND Phone_No = ?");
+            $phoneCheckStmt->execute([$supplier_id, $phone]);
 
-                if ($phoneCheckStmt->fetch()) {
-                    // Phone already exists for this supplier, just commit the email update
-                    $pdo->commit();
-                    $message = "Supplier details updated (Email processed, Phone was already existing).";
-                } else {
-                    // Step 3: Insert the new phone number
-                    $insertPhoneStmt = $pdo->prepare("INSERT INTO SUPPLIER_PHONE (Supplier_ID, Phone_No) VALUES (?, ?)");
-                    $insertPhoneStmt->execute([$supplier_id, $phone]);
-
-                    $pdo->commit();
-
-                    if ($existingSupplier) {
-                        $message = "New phone number added to existing supplier.";
-                    } else {
-                        $message = "Supplier added successfully.";
-                    }
-                }
+            if ($phoneCheckStmt->fetch()) {
+                $pdo->rollBack();
+                $error = "This phone number already exists for the supplier.";
             } else {
-                // No phone provided, but we might have updated the email for an existing supplier
+                // Step 3: Insert the new phone number
+                $insertPhoneStmt = $pdo->prepare("INSERT INTO SUPPLIER_PHONE (Supplier_ID, Phone_No) VALUES (?, ?)");
+                $insertPhoneStmt->execute([$supplier_id, $phone]);
+
                 $pdo->commit();
-                $message = "Supplier email updated successfully.";
+
+                if ($existingSupplier) {
+                    $message = "New phone number added to existing supplier.";
+                } else {
+                    $message = "Supplier added successfully.";
+                }
             }
-        }
-    } catch (PDOException $e) {
+        } catch (PDOException $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
@@ -146,7 +127,7 @@ $existing_suppliers = $pdo->query("
         <div class="mb-3">
             <label class="form-label">Phone Number</label>
             <input type="text" name="phone" id="phone" class="form-control" pattern="[0-9]{10}"
-                title="Please enter a valid 10 digit phone number" maxlength="10">
+                title="Please enter a valid 10 digit phone number" maxlength="10" required>
         </div>
 
         <button type="submit" class="btn btn-success">Save Supplier / Add Phone</button>
@@ -166,33 +147,12 @@ $existing_suppliers = $pdo->query("
                     if (!emailInput.value || emailInput.value === '') {
                         emailInput.value = data.email || '';
                     }
-                    if (data.phone && (!document.getElementById('phone').value || document.getElementById('phone').value === '')) {
-                        document.getElementById('phone').value = data.phone;
-                    }
                     notice.style.display = 'inline-block';
                 } else {
                     notice.style.display = 'none';
                 }
             })
             .catch(err => console.error(err));
-    });
-
-    // Handle Edit button click with Event Delegation
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('edit-btn')) {
-            const name = e.target.getAttribute('data-name');
-            const email = e.target.getAttribute('data-email');
-            
-            document.getElementById('supplier_name').value = name;
-            document.getElementById('email').value = email;
-            document.getElementById('phone').value = ''; // Reset phone for specific edit request
-            
-            // Trigger the blur logic to show the "Existing Found" badge and fetch phone
-            document.getElementById('supplier_name').dispatchEvent(new Event('blur'));
-            
-            // Scroll to form
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
     });
 </script>
 
@@ -206,7 +166,6 @@ $existing_suppliers = $pdo->query("
                     <th>Supplier Name</th>
                     <th>Email</th>
                     <th>Phone Numbers</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -217,13 +176,6 @@ $existing_suppliers = $pdo->query("
                             <td><?php echo htmlspecialchars($sup['Supplier_Name']); ?></td>
                             <td><?php echo htmlspecialchars($sup['Email'] ?? 'N/A'); ?></td>
                             <td><?php echo htmlspecialchars($sup['Phones'] ?? 'None'); ?></td>
-                            <td>
-                                <button class="btn btn-sm btn-primary edit-btn" 
-                                        data-name="<?php echo htmlspecialchars($sup['Supplier_Name']); ?>"
-                                        data-email="<?php echo htmlspecialchars($sup['Email'] ?? ''); ?>">
-                                    Edit
-                                </button>
-                            </td>
                         </tr>
                     <?php endforeach; ?>
                 <?php else: ?>

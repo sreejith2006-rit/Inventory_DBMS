@@ -28,7 +28,7 @@ To ensure the system operates at maximum efficiency, the following environment i
 2.  Open [http://localhost/phpmyadmin](http://localhost/phpmyadmin).
 3.  Create a new database named **`inventory_system`**.
 4.  Import the `inventory_system.sql` file provided in the repository root.
-5.  Rename `config/db_example.php` to `config/db.php` and enter your credentials.
+5.  Copy `config/db.example.php` to `config/db.php` and enter your credentials.
 
 ### Step 3: PHP Configuration (Crucial)
 To connect to MongoDB Atlas, you **MUST** enable the OpenSSL and MongoDB extensions:
@@ -49,7 +49,7 @@ The NKR system uses Atlas for session security and user roles.
 3.  Whitelist your local IP address in the **Network Access** tab.
 
 ### Step 2: Connection String Integration
-1.  Open `config/mongo_config.php`.
+1.  Copy `config/mongo_config.example.php` to `config/mongo_config.php`.
 2.  Enter your **SRV Connection String** into the `$uri` variable.
 3.  Ensure the URI includes your username and password.
 

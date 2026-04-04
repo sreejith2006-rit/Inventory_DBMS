@@ -27,8 +27,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Manufacturing date must be before the expiry date.";
     } else {
         try {
-            $checkStmt = $pdo->prepare("SELECT Batch_ID FROM BATCH WHERE Item_ID = ? AND Manufacturing_Date = ? AND Expiry_Date = ?");
-            $checkStmt->execute([$item_id, $mfg_date, $expiry_date]);
+            $checkStmt = $pdo->prepare("SELECT Batch_ID FROM BATCH WHERE Item_ID = ? AND Purchase_ID = ? AND Manufacturing_Date = ? AND Expiry_Date = ?");
+            $checkStmt->execute([$item_id, $purchase_id, $mfg_date, $expiry_date]);
             $existingBatch = $checkStmt->fetch(PDO::FETCH_ASSOC);
 
             if ($existingBatch) {
@@ -48,7 +48,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // Fetch existing batches
 $existing_batches = $pdo->query("
-    SELECT b.Batch_ID, i.Item_Name, b.Quantity, b.Manufacturing_Date, b.Expiry_Date 
+    SELECT b.Batch_ID, b.Purchase_ID, i.Item_Name, b.Quantity, b.Manufacturing_Date, b.Expiry_Date 
     FROM BATCH b 
     JOIN ITEM i ON b.Item_ID = i.Item_ID 
     ORDER BY b.Batch_ID DESC
@@ -124,6 +124,7 @@ $existing_batches = $pdo->query("
                 <tr>
                     <th>Batch ID</th>
                     <th>Item Name</th>
+                    <th>Purchase ID</th>
                     <th>Quantity</th>
                     <th>Manufacturing Date</th>
                     <th>Expiry Date</th>
@@ -135,6 +136,7 @@ $existing_batches = $pdo->query("
                         <tr>
                             <td><?php echo $batch['Batch_ID']; ?></td>
                             <td><?php echo htmlspecialchars($batch['Item_Name']); ?></td>
+                            <td>Purchase #<?php echo $batch['Purchase_ID']; ?></td>
                             <td><?php echo $batch['Quantity']; ?></td>
                             <td><?php echo $batch['Manufacturing_Date']; ?></td>
                             <td><?php echo $batch['Expiry_Date']; ?></td>

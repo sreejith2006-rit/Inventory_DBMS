@@ -32,11 +32,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$batch_row) {
                 throw new Exception("Batch not found.");
             }
-            if ($batch_row['Quantity'] < $quantity_sold) {
-                throw new Exception("Insufficient stock. Only " . $batch_row['Quantity'] . " items available.");
-            }
 
-            // Insert into SALE
+            // Insert into SALE - Your 'trg_check_stock' trigger will handle the quantity check
             $stmt_insert = $pdo->prepare("INSERT INTO SALE (Batch_ID, Quantity_Sold, Sale_Date) VALUES (?, ?, ?)");
             $stmt_insert->execute([$batch_id, $quantity_sold, $sale_date]);
 
